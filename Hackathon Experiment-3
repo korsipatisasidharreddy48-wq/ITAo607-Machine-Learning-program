@@ -1,0 +1,54 @@
+import numpy as np
+import pandas as pd
+
+# 1. Prepare the dataset (Classic Weather/EnjoySport format)
+data_c = [
+    ['Sunny', 'Warm', 'Normal', 'Strong', 'Yes'],
+    ['Sunny', 'Warm', 'High', 'Strong', 'Yes'],
+    ['Rainy', 'Cold', 'High', 'Strong', 'No'],
+    ['Sunny', 'Warm', 'High', 'Strong', 'Yes']
+]
+
+attributes = ['Sky', 'Temp', 'Humidity', 'Wind']
+df_c = pd.DataFrame(data_c, columns=attributes + ['Target'])
+
+def learn(concepts, target):
+    # Initialize Specific boundary with the first positive example
+    specific_h = concepts[0].copy()
+    # Initialize General boundary with '?' (matches everything)
+    general_h = [["?" for i in range(len(specific_h))] for i in range(len(specific_h))]
+
+    for i, h in enumerate(concepts):
+        if target[i] == "Yes":
+            for x in range(len(specific_h)):
+                if h[x] != specific_h[x]:
+                    specific_h[x] = '?'
+                    general_h[x][x] = '?'
+
+        if target[i] == "No":
+            for x in range(len(specific_h)):
+                if h[x] != specific_h[x]:
+                    general_h[x][x] = specific_h[x]
+                else:
+                    general_h[x][x] = '?'
+
+    # Remove empty sets from general boundary
+    indices = [i for i, val in enumerate(general_h) if val == ['?', '?', '?', '?']]
+    for i in reversed(indices):
+        general_h.pop(i)
+
+    return specific_h, general_h
+
+concepts = np.array(df_c.iloc[:, :-1])
+target = np.array(df_c.iloc[:, -1])
+
+s_final, g_final = learn(concepts, target)
+
+print("Final Specific Boundary (S):", s_final)
+print("Final General Boundary (G):", g_final)
+print("\nThe Version Space is the set of hypotheses between S and G.")
+output:
+Final Specific Boundary (S): ['Sunny' 'Warm' '?' 'Strong']
+Final General Boundary (G): [['Sunny', '?', '?', '?'], ['?', 'Warm', '?', '?']]
+
+The Version Space is the set of hypotheses between S and G.
